@@ -1,0 +1,35 @@
+FROM python:3.9-slim
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias del sistema y controlador ODBC
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    gnupg2 \
+    apt-transport-https \
+    unixodbc \
+    unixodbc-dev \
+    libgssapi-krb5-2 \
+    && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql18 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verificar si libodbc.so.2 está instalado y forzar un enlace simbólico si es necesario
+RUN if [ ! -f /usr/lib/libodbc.so.2 ]; then \
+        ln -s /opt/microsoft/msodbcsql18/lib64/libmsodbcsql-18.so.1.1 /usr/lib/libodbc.so.2; \
+    fi
+
+# Instalar dependencias de Python
+COPY cdc_sql_to_bigquery.py .
+COPY credentials.json /app/credentials.json
+RUN pip install --no-cache-dir apache-beam[gcp] pyodbc pandas
+
+# Configurar credenciales de GCP
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+
+# Ejecutar el script
+CMD ["python", "cdc_sql_to_bigquery.py"]
