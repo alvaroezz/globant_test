@@ -2,7 +2,7 @@
 
 # Aquitectura
 
-![Flujo](/app/replica_cdc_globant.png)
+![Flujo](/app/replica_cdc_globant.jpg)
 
 
 La estructura de carpetas del repositorio simula 3 servidores de Microsoft SQL Server uno con datos centrales y otros con datos por sucursal:
